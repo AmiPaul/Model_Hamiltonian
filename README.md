@@ -1,4 +1,4 @@
-#                                                                                                                 Model_Hamiltonian
+<h1 align="center">Model Hamiltonian</h1>
 
 
 
