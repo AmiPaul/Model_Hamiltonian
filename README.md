@@ -2,6 +2,7 @@
 
 # Model Hamiltonian
 
+
 <img width="843" height="423" alt="image" src="https://github.com/user-attachments/assets/45307ed2-9d8c-4884-93c6-b11ff923d885" />
 </div>
 
