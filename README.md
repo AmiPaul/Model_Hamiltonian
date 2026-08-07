@@ -38,12 +38,12 @@ These interaction terms capture the anharmonic vibrational couplings responsible
 
 The mode-specific energy currents are obtained from the coupling Hamiltonian as
 
-\[
-J_i = \frac{dE_i}{dt}
-      = -\dot q_i
-      \frac{\partial H_{\mathrm{coup}}}{\partial q_i},
-\]
 
+<p align="center">
+<b>
+J<sub>i</sub> = dE<sub>i</sub>/dt = -q̇<sub>i</sub> ∂H<sub>coup</sub>/∂q<sub>i</sub>
+</b>
+</p>
 which allows direct analysis of the energy flow during classical trajectory simulations.
 
 ## Dynamics
