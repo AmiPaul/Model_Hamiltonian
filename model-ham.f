@@ -2,7 +2,8 @@
       IMPLICIT DOUBLE PRECISION (A-H,O-Z)
 
       INTEGER NSTEP, I
-      PARAMETER (NT = 200,NS=50000)
+      PARAMETER (NT = 200,NS=15000)
+      PARAMETER (C1=418.4)
       DOUBLE PRECISION DT
 
 C --- Coordinates (Å) and momenta (amu*Å/ps)
@@ -29,6 +30,7 @@ C --- Couplings (kcal/mol/Å^2)
 C ---  (energy currents
       DOUBLE PRECISION qqA(NT,NS),qqD(NT,NS),QQ(NT,NS)
       DOUBLE PRECISION EED(NT,NS),EEA(NT,NS),EEHB(NT,NS)
+      DOUBLE PRECISION HH(NT,NS),VV(NT,NS),TT(NT,NS)
 
 C --- Energies
       DOUBLE PRECISION ED_IVR(NT,NS),EA_IVR(NT,NS)
@@ -37,10 +39,12 @@ C --- Energies
       DOUBLE PRECISION JJHB(NT),JJD(NT),JJA(NT)
 
 C-------------------------------
+      DOUBLE PRECISION H,V,T
       DOUBLE PRECISION JHBENS, JDENS, JAENS      
       DOUBLE PRECISION qAA, qDD, QQQ, EDD, EAA, EHHB
       DOUBLE PRECISION EDD_IVR, EAA_IVR, EDD_HB, EAA_HB
       DOUBLE PRECISION JHHB, JDD, JAA
+      DOUBLE PRECISION HHT, VVT, TTT
 
       DT = 0.0002D0
       PI = 4.0D0*DATAN(1.0D0)
@@ -51,34 +55,35 @@ C --- Masses
       mQ = 10.0D0
 
 C --- Morse
-      DHB = 4.0D0
-      DD = 110.0D0
-      DA = 110.0D0
+      DHB = 4.0D0*C1
+      DD = 110.0D0*C1
+      DA = 110.0D0*C1
       aHB = 1.0D0
       aD = 2.2D0
       aA = 2.2D0
       
 
 C --- Couplings
-      kappa  = 1.0D0
-      delta  = 2.0D0
-      alphaD = 0.5D0
-      alphaA = 2.0D0
-      betaA = 0.2D0
-      betaD = 0.0D0
+      kappa  = 1.0D0*C1
+      delta  = 3.5D0*C1
+      alphaD = 0.5D0*C1
+      alphaA = 2.5D0*C1
+      betaA = 0.0D0*C1
+      betaD = 0.0D0*C1
 
 
 
-      A = 0.116d0  ! Angstrom (for v = 1 of D)
-      omega = 68 !ps-1
+      A = 0.1205d0  ! Angstrom (for v = 1 of D)
+      omega = 668 !ps-1
 
       JHBENS = 0.0D0
       JDENS = 0.0D0
       JAENS = 0.0D0
 
-      OPEN(10, FILE='traj_real_A.dat',status="replace")
-      OPEN(11, FILE='traj_JA.dat',status="replace")
-      OPEN(12, FILE='traj_EA_Comp.dat',status="replace")
+      OPEN(10, FILE='traj_real_D.dat',status="replace")
+      OPEN(11, FILE='traj_JD.dat',status="replace")
+      OPEN(12, FILE='traj_ED_Comp.dat',status="replace")
+      OPEN(13, FILE='traj_ET_D.dat',status="replace")
 
       DO 200 ITRAJ = 1, NT
       JJHB(ITRAJ)= 0.0d0
@@ -97,10 +102,10 @@ C --- Initial conditions
       call random_number(rnd)
       phi = 2.0d0*pi*rnd
 
-      qA = A*cos(phi)
-      pA = -mA*omega*A*sin(phi)
-c     qD = A*cos(phi)
-c     pD = -mD*omega*A*sin(phi)
+c     qA = A*cos(phi)
+c     pA = mA*omega*A*sin(phi)
+      qD = A*cos(phi)
+      pD = mD*omega*A*sin(phi)
 c     qD = 0.0d0
 c     pD = 8.0d0
 
@@ -133,14 +138,22 @@ C --- Complete momenta
          pQ = pQ + 0.5D0*DT*fQ
 
 C --- Positions
-         qD = qD + DT*pD/mD
-         qA = qA + DT*pA/mA
-         Q  = Q  + DT*pQ/mQ
+c        qD = qD + DT*pD/mD
+c        qA = qA + DT*pA/mA
+c        Q  = Q  + DT*pQ/mQ
 
 C --- Energies (kcal/mol)
          ED  = 0.5D0*pD*pD/mD
          EA  = 0.5D0*pA*pA/mA
          EHB = 0.5D0*pQ*pQ/mQ
+
+C----------------ENERGIES
+      CALL ENERGY (pD,pA,pQ,qD,qA,Q,DHB,DD,DA,aHB,aD,aA,
+     & mA,mD,mQ,kappa,delta,alphaD,alphaA,betaA,betaD,H,V,T)    
+         HH(ITRAJ,I)=H
+         VV(ITRAJ,I)=V
+         TT(ITRAJ,I)=T
+c        write(7,*)I*DT,HH(itraj,i),vv(itraj,i),tt(itraj,i)
 
 C----SUMMING UP--------------
          qqA(ITRAJ,I)=qA
@@ -169,6 +182,7 @@ c     write(6,*)qA,qD,Q,ED,ED_IVR,ED_HB,JJD
 c     WRITE(12+ITRAJ,*)qA,qD,Q,ED,EA,EHB
 
  100  CONTINUE
+c     write(7,*)
 
 C-----AVERAGING----------------      
       JJHB(ITRAJ)=JJHB(ITRAJ)/NS
@@ -182,7 +196,7 @@ C-----AVERAGING----------------
       JHBENS=JHBENS/NT
       JDENS = JDENS/NT
       JAENS = JAENS/NT
-      WRITE(6,*)"Averahed JHB, JD, and JA  ",JHBENS,JDENS,JAENS
+      WRITE(6,*)"Averaged JHB, JD, and JA  ",JHBENS/C1,JDENS/C1,JAENS/C1
 
       DO 300 ISTEP=1,NS
         qAA=0.0d0
@@ -198,6 +212,9 @@ C-----AVERAGING----------------
         JHHB=0.0d0
         JDD=0.0d0
         JAA=0.0d0
+        HHT=0.0d0
+        VVT=0.0d0
+        TTT=0.0d0
       DO 400 ITRAJ=1,NT
         qAA=qAA+qqA(ITRAJ,ISTEP)
         qDD=qDD+qqD(ITRAJ,ISTEP)
@@ -212,6 +229,9 @@ C-----AVERAGING----------------
         JHHB=JHHB+JHB(ITRAJ,ISTEP)
         JDD=JDD+JD(ITRAJ,ISTEP)
         JAA=JAA+JA(ITRAJ,ISTEP)
+        HHT=HHT+HH(ITRAJ,ISTEP)
+        VVT=VVT+VV(ITRAJ,ISTEP)
+        TTT=TTT+TT(ITRAJ,ISTEP)
  400  CONTINUE
         qAA=qAA/NT
         qDD=qDD/NT
@@ -226,13 +246,18 @@ C-----AVERAGING----------------
         JHHB=JHHB/NT
         JDD=JDD/NT
         JAA=JAA/NT
-         WRITE(10,*) ISTEP*DT, qDD, qAA, QQQ, EDD, EAA, EHHB
-         WRITE(11,*) ISTEP*DT, JAA, JDD, JHHB
-         WRITE(12,*) ISTEP*DT, EDD_IVR,EAA_IVR,EDD_HB,EAA_HB 
+        HHT=HHT/NT
+        VVT=VVT/NT
+        TTT=TTT/NT
+         WRITE(10,*) ISTEP*DT, qDD, qAA, QQQ, EDD/C1, EAA/C1, EHHB/C1
+         WRITE(11,*) ISTEP*DT, JAA/C1, JDD/C1, JHHB/C1
+         WRITE(12,*) ISTEP*DT,EDD_IVR/C1,EAA_IVR/C1,EDD_HB/C1,EAA_HB/C1 
+         WRITE(13,*) ISTEP*DT,HHT/C1,VVT/C1,TTT/C1
  300  CONTINUE
       CLOSE(10)
       CLOSE(11)
       CLOSE(12)
+      CLOSE(13)
       END
 
 
@@ -265,4 +290,31 @@ C --- Forces
 
       RETURN
       END
+ 
+C --------------------------------------------------------
+      SUBROUTINE ENERGY (pD,pA,pQ,qD,qA,Q,DHB,DD,DA,aHB,aD,aA,
+     & mA,mD,mQ,kappa,delta,alphaD,alphaA,betaA,betaD,H,V,T)    
+      IMPLICIT DOUBLE PRECISION (A-H,O-Z)
+
+      DOUBLE PRECISION mA, mD, mQ, kappa
+
+      eD = EXP(-aD*qD)
+      eA = EXP(-aA*qA)
+      eHB = EXP(-aHB*Q)
+      HD = 0.5D0*pD*pD/mD
+      HA = 0.5D0*pA*pA/mA
+      HQ = 0.5D0*pQ*pQ/mQ
+      H=HD+HA+HQ
+      VMD = DD*(1.0D0 - eD)**2
+      VMA = DA*(1.0D0 - eA)**2
+      VMHB = DHB*(1.0D0 - eHB)**2
+      V=VMD+VMA+VMHB
+      V=V+kappa*qA*qD+alphaD*qD*Q+alphaA*qA*Q
+      V=V+delta*qD*qD*qA+betaA*qA*qA*Q+betaD*qD*qD*Q
+      T=H+V
+
+      RETURN
+      END
+
+
 
