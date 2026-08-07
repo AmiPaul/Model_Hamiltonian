@@ -21,9 +21,7 @@ The model describes vibrational energy transfer in hydrogen-bonded complexes usi
 
 The Hamiltonian is expressed as
 
-\[
-H = H_D + H_A + H_{HB} + H_{\mathrm{coup}}
-\]
+**H = H<sub>D</sub> + H<sub>A</sub> + H<sub>HB</sub> + H<sub>coup</sub>**
 
 where each mode is represented by a Morse oscillator, and the coupling Hamiltonian includes:
 
